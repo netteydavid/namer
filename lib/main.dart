@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 
-//TODO: Publish to Github when done with tutorial proper
-//TODO: Add "Next Steps" as branches that are merged
 void main() {
   runApp(MyApp());
 }
@@ -141,6 +139,7 @@ class FavoritesPage extends StatelessWidget {
                 Clipboard.setData(ClipboardData(text: e.asLowerCase));
               },
               onLongPress: () {
+                //TODO: Popup confirming deletion
                 appState.current = e;
                 appState.toggleFavorite();
               },
