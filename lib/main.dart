@@ -1,6 +1,7 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 //TODO: Publish to Github when done with tutorial proper
 //TODO: Add "Next Steps" as branches that are merged
@@ -134,8 +135,15 @@ class FavoritesPage extends StatelessWidget {
 
     content.addAll(favorites
         .map((e) => ListTile(
-              leading: Icon(Icons.delete),
+              leading: Icon(Icons.favorite),
               title: Text(e.asLowerCase),
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: e.asLowerCase));
+              },
+              onLongPress: () {
+                appState.current = e;
+                appState.toggleFavorite();
+              },
             ))
         .toList());
 
@@ -205,17 +213,20 @@ class BigCard extends StatelessWidget {
       color: theme.colorScheme.onPrimary,
     );
 
-    return Card(
-      color: theme.colorScheme.primary,
-      elevation: 7.0,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Text(
-          pair.asLowerCase,
-          style: style,
-          semanticsLabel: "${pair.first} ${pair.second}",
+    return GestureDetector(
+      child: Card(
+        color: theme.colorScheme.primary,
+        elevation: 7.0,
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text(
+            pair.asLowerCase,
+            style: style,
+            semanticsLabel: "${pair.first} ${pair.second}",
+          ),
         ),
       ),
+      onTap: () => Clipboard.setData(ClipboardData(text: pair.asLowerCase)),
     );
   }
 }
