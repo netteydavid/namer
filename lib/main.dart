@@ -2,6 +2,7 @@ import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,7 +14,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => MyAppState(),
+      create: (context) {
+        var state = MyAppState();
+        state.loadFavorites();
+        return state;
+      },
       child: MaterialApp(
         title: 'Namer App',
         theme: ThemeData(
@@ -27,6 +32,8 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {
+  final key = 'favorites';
+
   var current = WordPair.random();
 
   void getNext() {
@@ -43,7 +50,36 @@ class MyAppState extends ChangeNotifier {
       favorites.add(current);
     }
 
+    saveFavorites();
+
     notifyListeners();
+  }
+
+  void saveFavorites() {
+    SharedPreferences.getInstance().then((value) {
+      var strFavorites =
+          favorites.map((e) => "${e.first}_${e.second}").toList();
+
+      if (strFavorites.isEmpty) {
+        value.remove(key);
+      } else {
+        value.setStringList(key, strFavorites);
+      }
+    });
+  }
+
+  void loadFavorites() {
+    SharedPreferences.getInstance().then((value) {
+      var strFavorites = value.get(key) as List<Object?>?;
+
+      if (strFavorites != null && strFavorites.isNotEmpty) {
+        favorites.clear();
+        for (var pair in strFavorites) {
+          var separated = (pair as String).split('_');
+          favorites.add(WordPair(separated.first, separated.last));
+        }
+      }
+    });
   }
 }
 
