@@ -139,9 +139,26 @@ class FavoritesPage extends StatelessWidget {
                 Clipboard.setData(ClipboardData(text: e.asLowerCase));
               },
               onLongPress: () {
-                //TODO: Popup confirming deletion
-                appState.current = e;
-                appState.toggleFavorite();
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                          title: Text('Remove ${e.toLowerCase()}'),
+                          content: Text(
+                              'Are you sure you want remove ${e.toLowerCase()} from your favorites?'),
+                          actions: <Widget>[
+                            TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, 'Cancel'),
+                                child: const Text('NO')),
+                            TextButton(
+                                onPressed: () {
+                                  appState.current = e;
+                                  appState.toggleFavorite();
+                                  Navigator.pop(context, 'OK');
+                                },
+                                child: const Text('YES'))
+                          ],
+                        ));
               },
             ))
         .toList());
