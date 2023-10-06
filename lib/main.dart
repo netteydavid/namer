@@ -4,22 +4,29 @@ import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+//Every dart app enters through the main method.
 void main() {
   runApp(MyApp());
 }
 
+//The main app itself. Note that this is a widget.
+//Think of the UI/UX as a tree of widgets
+//This widget is stateless, meaning it doesn't tend to change dynamically.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  //Creates the UI for the the current widget.
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
+      //Allows ChangeNotifers to be used with the app
       create: (context) {
         var state = MyAppState();
         state.loadFavorites();
         return state;
       },
       child: MaterialApp(
+        //Main App UI, themes, title, etc.
         title: 'Namer App',
         theme: ThemeData(
           useMaterial3: true,
@@ -31,18 +38,22 @@ class MyApp extends StatelessWidget {
   }
 }
 
+//Handles the main app's state and sends change notifications
 class MyAppState extends ChangeNotifier {
-  final key = 'favorites';
+  final key = 'favorites'; //Key for persistent data
 
-  var current = WordPair.random();
+  var current = WordPair.random(); //The current word pair to display
 
+  //Creates a new wordpair and sets it as the current wordpair
   void getNext() {
     current = WordPair.random();
     notifyListeners();
   }
 
+  //List of favorite wordpairs
   var favorites = <WordPair>[];
 
+  //Adds or removes the current wordpair
   void toggleFavorite() {
     if (favorites.contains(current)) {
       favorites.remove(current);
@@ -55,7 +66,9 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  //Saves the current list of favorite wordpairs to disk via a key-value pair
   void saveFavorites() {
+    //getInstance is async, so we use a callback so that we don't need to await
     SharedPreferences.getInstance().then((value) {
       var strFavorites =
           favorites.map((e) => "${e.first}_${e.second}").toList();
@@ -63,17 +76,21 @@ class MyAppState extends ChangeNotifier {
       if (strFavorites.isEmpty) {
         value.remove(key);
       } else {
+        //The saved kvp have only a few primitives available.
+        //For a list of objects, the objects must be serialized to string
         value.setStringList(key, strFavorites);
       }
     });
   }
 
+  //Loads the saved list of favorites
   void loadFavorites() {
     SharedPreferences.getInstance().then((value) {
       var strFavorites = value.get(key) as List<Object?>?;
 
       if (strFavorites != null && strFavorites.isNotEmpty) {
         favorites.clear();
+        //Deserialize objects and add to in-memory list of favorites
         for (var pair in strFavorites) {
           var separated = (pair as String).split('_');
           favorites.add(WordPair(separated.first, separated.last));
@@ -83,23 +100,28 @@ class MyAppState extends ChangeNotifier {
   }
 }
 
+//This widget can change dynamically based on user interaction
+//We must therefore create a state for this widget.
 class MyHomePage extends StatefulWidget {
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+//The state of the dynamically changable home page widget
 class _MyHomePageState extends State<MyHomePage> {
+  //Selected tab's 0-based index
   var selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    //Shows a different widget based on the selected tab
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = GeneratorPage();
+        page = GeneratorPage(); //Main page, shows current wordpair
         break;
       case 1:
-        page = FavoritesPage();
+        page = FavoritesPage(); //Lists favorted wordpairs
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -111,7 +133,8 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             SafeArea(
               child: NavigationRail(
-                extended: constraints.maxWidth >= 600,
+                extended: constraints.maxWidth >=
+                    600, //Changes look if phone is landscape
                 destinations: [
                   NavigationRailDestination(
                     icon: Icon(Icons.home),
@@ -124,6 +147,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
                 selectedIndex: selectedIndex,
                 onDestinationSelected: (value) {
+                  //setState sets the state (obviously)
+                  //setState must be called if there's going to be a UI change
                   setState(() {
                     selectedIndex = value;
                   });
@@ -143,6 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+//Displays favorited wordpairs
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({
     super.key,
@@ -150,9 +176,11 @@ class FavoritesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //Has the widget watch the nearest ancestor with type MyAppState
     var appState = context.watch<MyAppState>();
     var favorites = appState.favorites;
 
+    //Default content, no favorites yet
     if (favorites.isEmpty) {
       return Center(
         child: Text("No favorites yet"),
@@ -176,6 +204,7 @@ class FavoritesPage extends StatelessWidget {
               },
               onLongPress: () {
                 showDialog(
+                    //Shows a dialog when user tries to delete a word
                     context: context,
                     builder: (BuildContext context) => AlertDialog(
                           title: Text('Remove ${e.toLowerCase()}'),
@@ -205,6 +234,8 @@ class FavoritesPage extends StatelessWidget {
   }
 }
 
+//The main tab page, shows a new wordpair and allows
+//for favoriting and going to the next wordpair.
 class GeneratorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -249,6 +280,7 @@ class GeneratorPage extends StatelessWidget {
   }
 }
 
+//A card widget placed in the Generator tab. Displays current wordpair.
 class BigCard extends StatelessWidget {
   const BigCard({
     super.key,
